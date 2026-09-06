@@ -7,7 +7,10 @@
  */
 
 import bcrypt from "bcryptjs"
-import sha256 from "sha256"
+import { sha256 } from "./crypto"
+
+// 旧版密码哈希的盐值，必须与 auth.ts 中 hashPasswordSHA256 保持一致
+const LEGACY_HASH_SALT = "https://github.com/alist-org/alist"
 
 // bcrypt 配置
 const BCRYPT_ROUNDS = 12 // 2^12 次迭代，安全性和性能的平衡
@@ -37,8 +40,8 @@ export async function verifyPassword(
       // bcrypt 验证
       return bcrypt.compare(password, hash)
     } else {
-      // SHA256 验证（兼容旧数据）
-      const sha256Hash = sha256(password)
+      // SHA256 验证（兼容旧数据，OpenList/AList 规范：加盐哈希）
+      const sha256Hash = await sha256(`${password}-${LEGACY_HASH_SALT}`)
       return sha256Hash === hash
     }
   } catch (err) {
